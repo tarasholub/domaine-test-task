@@ -1,0 +1,121 @@
+{% doc %}
+  Product card. Front image per color = variant featured image,
+  hover image = product media with alt "[color]-secondary".
+  Color switching happens in assets/variant-swatches.js.
+
+  @param {product} product - product to render
+  @param {string} suffix - unique suffix for the swatch radio group name
+{% enddoc %}
+
+{%- liquid
+  assign current_variant = product.selected_or_first_available_variant
+
+  assign color_option = null
+  for option in product.options_with_values
+    if option.name == 'Color'
+      assign color_option = option
+    endif
+  endfor
+
+
+  assign color_index = color_option.position | default: 1 | minus: 1
+  assign current_color = current_variant.options[color_index] | default: current_variant.title
+  assign current_color_handle = current_color | handleize
+-%}
+
+<product-card
+  class="block w-[315px] max-w-full font-sans"
+  data-selected-color="{{ current_color_handle }}"
+>
+  <a
+    href="{{ current_variant.url }}"
+    class="group/media relative block h-[340px] w-full overflow-hidden rounded-[10px] border border-card-border bg-white"
+    data-card-link
+    aria-label="{{ product.title | escape }}"
+  >
+    {%- for value in color_option.values -%}
+      {%- liquid
+        assign value_handle = value | handleize
+        assign secondary_alt = value_handle | append: '-secondary'
+
+        assign front_image = null
+        assign secondary_image = null
+        for media in product.media
+          assign media_alt = media.alt | handleize
+          if media_alt == value_handle
+            assign front_image = media
+          elsif media_alt == secondary_alt
+            assign secondary_image = media
+          endif
+        endfor
+        unless front_image
+          assign front_image = value.variant.featured_image
+        endunless
+      -%}
+      <span
+        class="card-media absolute inset-0 block p-5 {% if value_handle == current_color_handle %}is-active{% endif %}"
+        data-color="{{ value_handle }}"
+      >
+        {%- comment -%}
+          Desktop (fine pointer): images stacked, secondary crossfades in on hover.
+          Touch (coarse pointer): images become swipeable scroll-snap slides.
+        {%- endcomment -%}
+        <span
+          class="relative block size-full pointer-coarse:flex pointer-coarse:snap-x pointer-coarse:snap-mandatory pointer-coarse:overflow-x-auto pointer-coarse:overscroll-x-contain pointer-coarse:[scrollbar-width:none] pointer-coarse:[&::-webkit-scrollbar]:hidden"
+          data-slides
+        >
+          {%- liquid
+            assign lazy_front = true
+            if value_handle == current_color_handle
+              assign lazy_front = false
+            endif
+            assign front_alt = product.title | append: ' — ' | append: value
+            assign secondary_alt_text = front_alt | append: ', on model'
+
+            assign front_class = 'absolute inset-0 size-full object-cover transition-opacity duration-200 pointer-coarse:static pointer-coarse:shrink-0 pointer-coarse:snap-center'
+            if secondary_image
+              assign front_class = front_class | append: ' pointer-fine:group-hover/media:opacity-0'
+            endif
+
+            if front_image
+              render 'product-image', image: front_image, alt: front_alt, width: 550, lazy: lazy_front, class: front_class
+            endif
+            if secondary_image
+              render 'product-image', image: secondary_image, alt: secondary_alt_text, width: 550, class: 'absolute inset-0 size-full object-contain opacity-0 transition-opacity duration-200 pointer-fine:group-hover/media:opacity-100 pointer-coarse:static pointer-coarse:shrink-0 pointer-coarse:snap-center pointer-coarse:opacity-100'
+            endif
+          -%}
+        </span>
+        {%- if secondary_image -%}
+          <span
+            class="pointer-events-none absolute inset-x-0 bottom-2 hidden justify-center gap-1.5 pointer-coarse:flex"
+            data-dots
+            aria-hidden="true"
+          >
+            <span class="size-1.5 rounded-full bg-ink/20 transition-colors [&.is-active]:bg-ink/70 is-active" data-dot></span>
+            <span class="size-1.5 rounded-full bg-ink/20 transition-colors [&.is-active]:bg-ink/70" data-dot></span>
+          </span>
+        {%- endif -%}
+      </span>
+    {%- endfor -%}
+
+    <span
+      class="absolute left-5 top-5 rounded-[20px] border border-sale px-[13px] py-[5px] font-badge text-sm font-medium leading-[1.15] text-sale {% unless current_variant.compare_at_price > current_variant.price %}hidden{% endunless %}"
+      data-sale-badge
+    >
+      On Sale!
+    </span>
+  </a>
+
+  <div class="mt-[15px] flex flex-col gap-[15px]">
+    {%- capture swatch_input_name -%}color-{{ product.id }}{% if suffix %}-{{ suffix }}{% endif %}{%- endcapture -%}
+    {% render 'color-swatches', color_option: color_option, current_color_handle: current_color_handle, input_name: swatch_input_name %}
+
+    <div class="flex flex-col gap-1.5">
+      <p class="text-sm leading-4 text-ink">{{ product.vendor }}</p>
+      <h3 class="text-base font-medium leading-4.5 text-brand">
+        <a href="{{ current_variant.url }}" data-card-link class="hover:underline">{{ product.title }}</a>
+      </h3>
+      {% render 'product-price', variant: current_variant %}
+    </div>
+  </div>
+</product-card>

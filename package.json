@@ -1,0 +1,19 @@
+{
+  "name": "domaine-test-task",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Domaine FE assessment product card",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tarasholub/domaine-test-task.git"
+  },
+  "scripts": {
+    "dev:css": "tailwindcss -i ./src/tailwind.css -o ./assets/tailwind.css --watch",
+    "build:css": "tailwindcss -i ./src/tailwind.css -o ./assets/tailwind.css --minify",
+    "dev": "shopify theme dev"
+  },
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.3.2",
+    "tailwindcss": "^4.3.2"
+  }
+}

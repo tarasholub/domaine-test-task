@@ -1,0 +1,27 @@
+{% doc %}
+  Price block with markdown (compare-at) support. Announces client-side
+  updates via aria-live; the data-* hooks are updated by
+  variant-swatches.js.
+
+  @param {variant} variant - the variant whose price to render
+{% enddoc %}
+
+{%- liquid
+  assign on_sale = false
+  if variant.compare_at_price > variant.price
+    assign on_sale = true
+  endif
+-%}
+<div class="flex items-start gap-2 text-sm leading-4" data-price aria-live="polite">
+  <s
+    class="text-ink {% unless on_sale %}hidden{% endunless %}"
+    data-compare-at-price
+  >
+    <span class="sr-only">Regular price</span>
+    <span data-compare-at-amount>{{ variant.compare_at_price | money }}</span>
+  </s>
+  <span class="{% if on_sale %}text-sale{% else %}text-ink{% endif %}" data-current-price>
+    <span class="sr-only {% unless on_sale %}hidden{% endunless %}" data-sale-label>Sale price</span>
+    <span data-current-amount>{{ variant.price | money }}</span>
+  </span>
+</div>

@@ -1,0 +1,23 @@
+{% doc %}
+  Responsive product image with a 1x/2x srcset.
+
+  @param {image} image - product media/image object
+  @param {string} alt - alt text
+  @param {string} class - CSS classes for the img tag
+  @param {number} width - base render width in px (defaults to 600; 2x doubles it)
+  @param {boolean} lazy - set false to load eagerly (defaults to lazy)
+{% enddoc %}
+
+{%- liquid
+  assign base_width = width | default: 600
+  assign retina_width = base_width | times: 2
+-%}
+<img
+  src="{{ image | image_url: width: base_width }}"
+  srcset="{{ image | image_url: width: base_width }} 1x, {{ image | image_url: width: retina_width }} 2x"
+  alt="{{ alt | escape }}"
+  width="{{ image.width }}"
+  height="{{ image.height }}"
+  {% unless lazy == false %}loading="lazy"{% endunless %}
+  class="{{ class }}"
+>

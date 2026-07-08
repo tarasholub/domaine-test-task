@@ -1,0 +1,42 @@
+{% doc %}
+  Color swatches as radio inputs. Each radio carries the variant data
+ (data-variant-*) consumed by variant-swatches.js.
+
+  @param {object} color_option - product option (options_with_values entry) named Color
+  @param {string} current_color_handle - handleized name of the selected color
+  @param {string} input_name - radio group name, must be unique per rendered instance
+{% enddoc %}
+
+<fieldset class="flex items-center gap-2 border-0 p-0" data-swatches>
+  <legend class="sr-only">Color</legend>
+  {%- for value in color_option.values -%}
+    {%- liquid
+      assign value_handle = value | handleize
+
+      comment
+        Native swatch (Color category metafield), falling back to the
+        color name itself as a CSS color
+      endcomment
+      assign swatch_color = value.swatch.color | default: value
+    -%}
+    <label class="relative block size-5 cursor-pointer">
+      <input
+        type="radio"
+        name="{{ input_name }}"
+        value="{{ value_handle }}"
+        data-swatch
+        data-variant-id="{{ value.variant.id }}"
+        data-variant-url="{{ value.variant.url }}"
+        data-variant-price="{{ value.variant.price | money }}"
+        data-variant-compare-at-price="{% if value.variant.compare_at_price > value.variant.price %}{{ value.variant.compare_at_price | money }}{% endif %}"
+        {% if value_handle == current_color_handle %}checked{% endif %}
+        class="peer absolute inset-0 size-full cursor-pointer appearance-none rounded-full"
+        aria-label="{{ value | escape }}"
+      >
+      <span
+        class="pointer-events-none absolute inset-0 rounded-full border border-black/10 peer-checked:outline-1 peer-checked:outline-offset-1 peer-checked:outline-brand peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-brand"
+        style="background-color: {{ swatch_color }};"
+      ></span>
+    </label>
+  {%- endfor -%}
+</fieldset>

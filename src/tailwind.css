@@ -1,0 +1,23 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand: #0a4874;
+  --color-ink: #111111;
+  --color-sale: #ff0000;
+  --color-card-border: #e8e8e8;
+
+  --font-sans: "Roboto", ui-sans-serif, system-ui, sans-serif;
+  --font-badge: "Libre Franklin", "Franklin Gothic Medium", ui-sans-serif, sans-serif;
+}
+
+@layer components {
+  .card-media {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .card-media.is-active {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}

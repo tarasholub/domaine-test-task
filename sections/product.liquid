@@ -1,0 +1,141 @@
+{% comment %}
+  Product page: gallery for the selected color, info and add-to-cart form.
+  Same media convention and snippets as the product card; products without
+  a Color option get a plain gallery and a select.
+{% endcomment %}
+
+<script src="{{ 'variant-swatches.js' | asset_url }}" defer></script>
+
+{%- liquid
+  assign current_variant = product.selected_or_first_available_variant
+
+  assign color_option = null
+  for option in product.options_with_values
+    if option.name == 'Color'
+      assign color_option = option
+    endif
+  endfor
+
+  assign color_index = color_option.position | default: 1 | minus: 1
+  assign current_color = current_variant.options[color_index] | default: current_variant.title
+  assign current_color_handle = current_color | handleize
+-%}
+
+<product-page class="mx-auto grid max-w-300 items-start gap-10 px-6 py-12 font-sans lg:grid-cols-2">
+  {%- if color_option -%}
+    <div>
+      {%- for value in color_option.values -%}
+        {%- liquid
+          assign value_handle = value | handleize
+          assign secondary_alt = value_handle | append: '-secondary'
+
+          assign front_image = null
+          assign secondary_image = null
+          for media in product.media
+            assign media_alt = media.alt | handleize
+            if media_alt == value_handle
+              assign front_image = media
+            elsif media_alt == secondary_alt
+              assign secondary_image = media
+            endif
+          endfor
+          unless front_image
+            assign front_image = value.variant.featured_image
+          endunless
+        -%}
+        <div
+          class="grid grid-cols-2 content-start gap-4 {% unless value_handle == current_color_handle %}hidden{% endunless %}"
+          data-media-panel
+          data-color="{{ value_handle }}"
+        >
+          {%- liquid
+            assign lazy_panel = true
+            if value_handle == current_color_handle
+              assign lazy_panel = false
+            endif
+            assign front_alt = product.title | append: ' — ' | append: value
+            assign secondary_alt_text = front_alt | append: ', on model'
+            assign tile_class = 'aspect-square w-full rounded-[10px] border border-card-border bg-white object-contain'
+
+            if front_image
+              render 'product-image', image: front_image, alt: front_alt, lazy: lazy_panel, class: tile_class
+            endif
+            if secondary_image
+              render 'product-image', image: secondary_image, alt: secondary_alt_text, lazy: lazy_panel, class: tile_class
+            endif
+          -%}
+        </div>
+      {%- endfor -%}
+    </div>
+  {%- else -%}
+    <div class="grid grid-cols-2 content-start gap-4">
+      {%- for media in product.media -%}
+        {%- liquid
+          assign media_alt = media.alt | default: product.title
+          assign lazy_media = true
+          if forloop.first
+            assign lazy_media = false
+          endif
+          render 'product-image', image: media, alt: media_alt, lazy: lazy_media, class: 'aspect-square w-full rounded-[10px] border border-card-border bg-white object-contain'
+        -%}
+      {%- endfor -%}
+    </div>
+  {%- endif -%}
+
+  <div class="flex flex-col gap-5 lg:sticky lg:top-8">
+    <div class="flex flex-col gap-1.5">
+      <p class="text-sm leading-4 text-ink">{{ product.vendor }}</p>
+      <h1 class="text-2xl font-medium text-brand">{{ product.title }}</h1>
+      {% render 'product-price', variant: current_variant %}
+    </div>
+
+    {% if product.description != blank %}
+      <div class="text-sm leading-5 text-ink">{{ product.description }}</div>
+    {% endif %}
+
+    {% form 'product', product %}
+      <div class="flex max-w-xs flex-col gap-4">
+        {%- if color_option -%}
+          <div class="flex flex-col gap-2">
+            <span class="text-sm text-ink">Color: <span data-selected-color-label>{{ current_color }}</span></span>
+            {% render 'color-swatches', color_option: color_option, current_color_handle: current_color_handle, input_name: 'pdp-color' %}
+          </div>
+          <input type="hidden" name="id" value="{{ current_variant.id }}" data-variant-id-input>
+        {%- elsif product.variants.size > 1 -%}
+          <label class="flex flex-col gap-1 text-sm text-ink">
+            {{ product.options.first | default: 'Variant' }}
+            <select name="id" class="rounded-md border border-card-border bg-white px-3 py-2">
+              {% for variant in product.variants %}
+                <option value="{{ variant.id }}" {% if variant == current_variant %}selected{% endif %}>
+                  {{ variant.title }} — {{ variant.price | money }}
+                </option>
+              {% endfor %}
+            </select>
+          </label>
+        {%- else -%}
+          <input type="hidden" name="id" value="{{ current_variant.id }}">
+        {%- endif -%}
+
+        <label class="flex flex-col gap-1 text-sm text-ink">
+          Quantity
+          <input type="number" name="quantity" min="1" value="1" class="w-24 rounded-md border border-card-border bg-white px-3 py-2">
+        </label>
+
+        <button type="submit" class="rounded-md bg-brand px-6 py-3 text-sm font-medium text-white hover:opacity-90">
+          Add to cart
+        </button>
+        {{ form | payment_button }}
+      </div>
+    {% endform %}
+  </div>
+</product-page>
+
+{% schema %}
+{
+  "name": "t:general.product",
+  "settings": [],
+  "disabled_on": {
+    "groups": ["header", "footer"]
+  }
+}
+{% endschema %}

@@ -1,0 +1,30 @@
+{% comment %}
+  Collection page listing, rendered with the product-card component.
+
+  https://shopify.dev/docs/storefronts/themes/architecture/templates/collection
+{% endcomment %}
+
+<script src="{{ 'variant-swatches.js' | asset_url }}" defer></script>
+
+<div class="mx-auto max-w-300 px-6 py-12">
+  <h1 class="mb-8 text-2xl font-medium text-ink">{{ collection.title }}</h1>
+
+  {% paginate collection.products by 20 %}
+    <ul class="flex flex-wrap gap-10" role="list">
+      {% for product in collection.products %}
+        <li class="min-w-0 max-w-full">
+          {% render 'product-card', product: product, suffix: section.id %}
+        </li>
+      {% endfor %}
+    </ul>
+
+    {{ paginate | default_pagination }}
+  {% endpaginate %}
+</div>
+
+{% schema %}
+{
+  "name": "t:general.collection",
+  "settings": []
+}
+{% endschema %}
